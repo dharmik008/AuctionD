@@ -1,0 +1,169 @@
+<!-- templates/calculator.html - EMI Calculator -->
+{% extends 'base.html' %}
+{% block title %}EMI Calculator — AutoBidCRM{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-calculator"></i> EMI Calculator</h1>
+      <p>Plan your finances before you bid</p>
+    </div>
+  </div>
+
+  <div class="calculator-layout">
+    <!-- LEFT: Input Panel -->
+    <div class="calc-input-panel">
+      <h3>Loan Details</h3>
+
+      {% if selected_car %}
+      <div class="selected-car-hint">
+        <div class="hint-icon"><i class="fas fa-car"></i></div>
+        <div>
+          <strong>{{ selected_car.name }}</strong>
+          <p>Base Price: {{ selected_car.base_price|currency }}</p>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="form-group">
+        <label class="form-label">Car Price (₹)</label>
+        <input type="number" id="carPrice" class="form-input" value="{{ selected_car.base_price if selected_car else 5000000 }}" min="100000" step="100000" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Down Payment (₹)</label>
+        <input type="number" id="downPayment" class="form-input" value="{{ (selected_car.base_price * 0.2) if selected_car else 1000000 }}" min="0" step="50000" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Interest Rate (% per annum)</label>
+        <input type="number" id="interestRate" class="form-input" value="9.5" step="0.5" min="5" max="24" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Loan Tenure (months)</label>
+        <input type="number" id="loanTenure" class="form-input" value="60" step="6" min="12" max="84" />
+      </div>
+
+      <button id="calculateBtn" class="btn btn-primary btn-full">
+        <i class="fas fa-sync-alt"></i>
+        <span>Calculate EMI</span>
+      </button>
+    </div>
+
+    <!-- RIGHT: Results Panel -->
+    <div class="calc-results-panel">
+      <div class="results-grid">
+        <div class="result-card">
+          <div class="result-icon"><i class="fas fa-money-bill-wave"></i></div>
+          <div class="result-label">Loan Amount</div>
+          <div class="result-value" id="loanAmount">—</div>
+        </div>
+        <div class="result-card">
+          <div class="result-icon"><i class="fas fa-calendar-week"></i></div>
+          <div class="result-label">Monthly EMI</div>
+          <div class="result-value" id="monthlyEMI">—</div>
+        </div>
+        <div class="result-card">
+          <div class="result-icon"><i class="fas fa-percent"></i></div>
+          <div class="result-label">Total Interest</div>
+          <div class="result-value" id="totalInterest">—</div>
+        </div>
+        <div class="result-card">
+          <div class="result-icon"><i class="fas fa-chart-line"></i></div>
+          <div class="result-label">Total Payment</div>
+          <div class="result-value" id="totalPayment">—</div>
+        </div>
+      </div>
+
+      <div class="amortization-section">
+        <h4><i class="fas fa-table"></i> Amortization Schedule (First 6 Months)</h4>
+        <div class="table-wrapper">
+          <table class="amortization-table">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>EMI</th>
+                <th>Principal</th>
+                <th>Interest</th>
+                <th>Balance</th>
+              </tr>
+            </thead>
+            <tbody id="amortBody">
+              <tr>
+                <td colspan="5" class="text-center">Click Calculate to see schedule</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+function calculateEMI() {
+  const carPrice = parseFloat(document.getElementById('carPrice').value);
+  const downPayment = parseFloat(document.getElementById('downPayment').value);
+  const annualRate = parseFloat(document.getElementById('interestRate').value);
+  const months = parseFloat(document.getElementById('loanTenure').value);
+  
+  const loanAmount = carPrice - downPayment;
+  if (loanAmount <= 0) {
+    document.getElementById('loanAmount').textContent = '₹0';
+    document.getElementById('monthlyEMI').textContent = '₹0';
+    document.getElementById('totalInterest').textContent = '₹0';
+    document.getElementById('totalPayment').textContent = '₹0';
+    return;
+  }
+  
+  const monthlyRate = annualRate / 100 / 12;
+  
+  let emi = 0;
+  if (monthlyRate > 0) {
+    emi = loanAmount * monthlyRate * Math.pow(1 + monthlyRate, months) / (Math.pow(1 + monthlyRate, months) - 1);
+  } else {
+    emi = loanAmount / months;
+  }
+  
+  const totalPayment = emi * months;
+  const totalInterest = totalPayment - loanAmount;
+  
+  // Update displays
+  document.getElementById('loanAmount').textContent = `₹${Math.round(loanAmount).toLocaleString('en-IN')}`;
+  document.getElementById('monthlyEMI').textContent = `₹${Math.round(emi).toLocaleString('en-IN')}`;
+  document.getElementById('totalInterest').textContent = `₹${Math.round(totalInterest).toLocaleString('en-IN')}`;
+  document.getElementById('totalPayment').textContent = `₹${Math.round(totalPayment).toLocaleString('en-IN')}`;
+  
+  // Generate amortization for first 6 months
+  generateAmortization(loanAmount, monthlyRate, emi, months);
+}
+
+function generateAmortization(loanAmount, monthlyRate, emi, totalMonths) {
+  let balance = loanAmount;
+  const amortBody = document.getElementById('amortBody');
+  amortBody.innerHTML = '';
+  
+  const displayMonths = Math.min(6, totalMonths);
+  
+  for (let i = 1; i <= displayMonths; i++) {
+    const interest = balance * monthlyRate;
+    const principal = emi - interest;
+    balance -= principal;
+    
+    const row = amortBody.insertRow();
+    row.insertCell(0).textContent = i;
+    row.insertCell(1).textContent = `₹${Math.round(emi).toLocaleString('en-IN')}`;
+    row.insertCell(2).textContent = `₹${Math.round(principal).toLocaleString('en-IN')}`;
+    row.insertCell(3).textContent = `₹${Math.round(interest).toLocaleString('en-IN')}`;
+    row.insertCell(4).textContent = `₹${Math.max(0, Math.round(balance)).toLocaleString('en-IN')}`;
+  }
+}
+
+document.getElementById('calculateBtn').addEventListener('click', calculateEMI);
+calculateEMI();
+</script>
+{% endblock %}
+{% endblock %}

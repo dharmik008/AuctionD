@@ -1,0 +1,211 @@
+<!-- templates/bidding.html - Premium Bidding Page -->
+{% extends 'base.html' %}
+{% block title %}Place Bid — {{ car.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="back-link">
+    <a href="{{ url_for('car_detail', car_id=car.id) }}">
+      <i class="fas fa-arrow-left"></i>
+      <span>Back to Car Details</span>
+    </a>
+  </div>
+
+  <div class="bidding-layout">
+    <!-- LEFT: Car Summary -->
+    <div class="bidding-car-summary">
+      <div class="summary-image">
+        <img src="{{ car.image }}" alt="{{ car.name }}"/>
+      </div>
+      <div class="summary-content">
+        <h2>{{ car.name }}</h2>
+        <div class="summary-details">
+          <p><i class="fas fa-tag"></i> <strong>{{ car.brand }}</strong> · {{ car.year }}</p>
+          <p><i class="fas fa-road"></i> {{ car.km }} km · {{ car.fuel }} · {{ car.transmission }}</p>
+          <p><i class="fas fa-palette"></i> {{ car.color }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Bidding Panel -->
+    <div class="bidding-panel">
+      <div class="current-bid-display">
+        <div class="bid-label">Current Highest Bid</div>
+        <div class="bid-amount-large" id="currentBidDisplay">{{ bid_info.current_bid|currency }}</div>
+        <div class="bidder-info" id="bidderInfo">
+          {% if bid_info.bidder_name %}
+            by {{ bid_info.bidder_name }}
+          {% else %}
+            No bids yet — Be the first!
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="bid-limits">
+        <div class="limit-item">
+          <span>Base Price</span>
+          <strong>{{ car.base_price|currency }}</strong>
+        </div>
+        <div class="limit-item">
+          <span>Maximum Bid</span>
+          <strong>{{ car.max_price|currency }}</strong>
+        </div>
+      </div>
+
+      <div class="bid-form">
+        <label for="bidAmount" class="form-label">Your Bid Amount (₹)</label>
+        <div class="bid-input-group">
+          <input 
+            type="number" 
+            id="bidAmount" 
+            class="bid-input" 
+            placeholder="Enter your bid" 
+            min="{{ bid_info.current_bid + 1 }}" 
+            max="{{ car.max_price }}"
+            step="50000"
+          />
+          <button id="placeBidBtn" class="btn btn-primary" data-car-id="{{ car.id }}">
+            <i class="fas fa-gavel"></i>
+            <span>Place Bid</span>
+          </button>
+        </div>
+        
+        <div class="quick-bids">
+          <button class="quick-bid-btn" data-increment="50000">+₹50K</button>
+          <button class="quick-bid-btn" data-increment="100000">+₹1L</button>
+          <button class="quick-bid-btn" data-increment="250000">+₹2.5L</button>
+          <button class="quick-bid-btn" data-increment="500000">+₹5L</button>
+        </div>
+        
+        <div id="bidMessage" class="bid-message"></div>
+      </div>
+
+      <div class="bid-history">
+        <h4><i class="fas fa-history"></i> Recent Bids</h4>
+        <div class="bid-history-list" id="bidHistoryList">
+          {% if bid_info.history %}
+            {% for bid in bid_info.history[-5:]|reverse %}
+            <div class="bid-history-item">
+              <span class="bidder-name">{{ bid.bidder }}</span>
+              <span class="bid-amount">{{ bid.amount|currency }}</span>
+              <span class="bid-time">{{ bid.time }}</span>
+            </div>
+            {% endfor %}
+          {% else %}
+            <p class="no-bids">No bids yet. Place the first bid!</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="bid-actions">
+        <a href="{{ url_for('car_detail', car_id=car.id) }}" class="btn btn-outline btn-block">
+          <i class="fas fa-times"></i>
+          <span>Cancel Bidding</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+let currentCarId = "{{ car.id }}";
+let refreshInterval = null;
+let currentBid = {{ bid_info.current_bid }};
+const maxPrice = {{ car.max_price }};
+
+function loadBidInfo() {
+  fetch(`/api/bid-info/${currentCarId}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.success && data.current_bid !== currentBid) {
+        currentBid = data.current_bid;
+        document.getElementById('currentBidDisplay').textContent = `₹${data.current_bid.toLocaleString('en-IN')}`;
+        const bidderInfo = document.getElementById('bidderInfo');
+        bidderInfo.textContent = data.bidder ? `by ${data.bidder}` : 'No bids yet';
+        
+        // Update bid input min
+        const bidInput = document.getElementById('bidAmount');
+        bidInput.min = data.current_bid + 1;
+        
+        // Update bid history
+        const historyList = document.getElementById('bidHistoryList');
+        if (data.history && data.history.length > 0) {
+          historyList.innerHTML = data.history.slice().reverse().map(bid => `
+            <div class="bid-history-item">
+              <span class="bidder-name">${bid.bidder}</span>
+              <span class="bid-amount">₹${bid.amount.toLocaleString('en-IN')}</span>
+              <span class="bid-time">${bid.time}</span>
+            </div>
+          `).join('');
+        } else {
+          historyList.innerHTML = '<p class="no-bids">No bids yet. Place the first bid!</p>';
+        }
+      }
+    });
+}
+
+// Refresh every 5 seconds
+refreshInterval = setInterval(loadBidInfo, 5000);
+
+// Place bid
+document.getElementById('placeBidBtn').addEventListener('click', function() {
+  const bidAmount = parseInt(document.getElementById('bidAmount').value);
+  const carId = this.dataset.carId;
+  
+  if (!bidAmount || bidAmount <= currentBid) {
+    showMessage(`Bid must exceed current bid of ₹${currentBid.toLocaleString('en-IN')}`, 'error');
+    return;
+  }
+  
+  if (bidAmount > maxPrice) {
+    showMessage(`Bid cannot exceed maximum price of ₹${maxPrice.toLocaleString('en-IN')}`, 'error');
+    return;
+  }
+  
+  fetch('/api/place-bid', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ car_id: carId, bid_amount: bidAmount })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      showMessage(data.message, 'success');
+      document.getElementById('bidAmount').value = '';
+      currentBid = data.new_bid;
+      document.getElementById('currentBidDisplay').textContent = `₹${data.new_bid.toLocaleString('en-IN')}`;
+      document.getElementById('bidderInfo').textContent = `by ${data.bidder}`;
+      loadBidInfo();
+    } else {
+      showMessage(data.message, 'error');
+    }
+  });
+});
+
+// Quick bid buttons
+document.querySelectorAll('.quick-bid-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const increment = parseInt(this.dataset.increment);
+    const bidInput = document.getElementById('bidAmount');
+    bidInput.value = currentBid + increment;
+  });
+});
+
+function showMessage(msg, type) {
+  const msgDiv = document.getElementById('bidMessage');
+  msgDiv.textContent = msg;
+  msgDiv.className = `bid-message ${type}`;
+  setTimeout(() => {
+    msgDiv.textContent = '';
+    msgDiv.className = 'bid-message';
+  }, 3000);
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+  if (refreshInterval) clearInterval(refreshInterval);
+});
+</script>
+{% endblock %}
+{% endblock %}
