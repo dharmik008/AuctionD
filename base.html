@@ -1,0 +1,213 @@
+<!-- templates/base.html - Premium Layout -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="AutoBidCRM — India's Premier Luxury Car Auction Platform"/>
+  <title>{% block title %}AutoBidCRM{% endblock %} — Luxury Car Auctions</title>
+  
+  <!-- Google Fonts - Premium Pairing -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  
+  <!-- Font Awesome 6 (Free) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- Premium Navbar -->
+<nav class="navbar">
+  <div class="nav-container">
+    <a href="{{ url_for('index') }}" class="nav-brand">
+      <div class="brand-icon">
+        <i class="fas fa-gavel"></i>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">AutoBid</span>
+        <span class="brand-accent">CRM</span>
+      </div>
+    </a>
+
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="nav-links" id="navLinks">
+      {% if current_user %}
+        <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+          <i class="fas fa-chart-line"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="{{ url_for('auction') }}" class="nav-link {% if request.endpoint == 'auction' %}active{% endif %}">
+          <i class="fas fa-gavel"></i>
+          <span>Live Auctions</span>
+        </a>
+        <a href="{{ url_for('bidding_history') }}" class="nav-link {% if request.endpoint == 'bidding_history' %}active{% endif %}">
+          <i class="fas fa-history"></i>
+          <span>Bid History</span>
+        </a>
+        <a href="{{ url_for('calculator') }}" class="nav-link {% if request.endpoint == 'calculator' %}active{% endif %}">
+          <i class="fas fa-calculator"></i>
+          <span>EMI Calc</span>
+        </a>
+        <div class="nav-user">
+          <div class="user-avatar">
+            {{ current_user.avatar or current_user.name[0] }}
+          </div>
+          <div class="user-info">
+            <span class="user-name">{{ current_user.name.split()[0] }}</span>
+            <span class="user-role">Collector</span>
+          </div>
+        </div>
+        <a href="{{ url_for('logout') }}" class="btn-logout">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Exit</span>
+        </a>
+      {% else %}
+        <a href="{{ url_for('login') }}" class="btn btn-outline">
+          <i class="fas fa-key"></i>
+          <span>Sign In</span>
+        </a>
+        <a href="{{ url_for('signup') }}" class="btn btn-primary">
+          <i class="fas fa-user-plus"></i>
+          <span>Join Now</span>
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="flash-container">
+    {% for category, message in messages %}
+    <div class="flash flash-{{ category }} animate-slide-in">
+      <div class="flash-icon">
+        {% if category == 'success' %}
+          <i class="fas fa-check-circle"></i>
+        {% elif category == 'error' %}
+          <i class="fas fa-exclamation-circle"></i>
+        {% elif category == 'warning' %}
+          <i class="fas fa-exclamation-triangle"></i>
+        {% else %}
+          <i class="fas fa-info-circle"></i>
+        {% endif %}
+      </div>
+      <div class="flash-content">{{ message }}</div>
+      <button class="flash-close" onclick="this.parentElement.remove()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+
+<!-- Main Content -->
+<main class="main-content">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- Premium Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <div class="brand-icon-small">
+            <i class="fas fa-gavel"></i>
+          </div>
+          <span class="footer-brand-name">AutoBid<span>CRM</span></span>
+        </div>
+        <p class="footer-description">India's premier platform for luxury and exotic car auctions. Transparent bidding, verified vehicles, premium experience.</p>
+        <div class="footer-social">
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+          <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        </div>
+      </div>
+      <div class="footer-links-group">
+        <h4>Auctions</h4>
+        <ul>
+          <li><a href="{{ url_for('auction') }}">Live Auctions</a></li>
+          <li><a href="#">Upcoming Events</a></li>
+          <li><a href="#">Past Results</a></li>
+          <li><a href="#">How It Works</a></li>
+        </ul>
+      </div>
+      <div class="footer-links-group">
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="{{ url_for('calculator') }}">EMI Calculator</a></li>
+          <li><a href="#">Car Valuation</a></li>
+          <li><a href="#">Market Insights</a></li>
+          <li><a href="#">Buyer's Guide</a></li>
+        </ul>
+      </div>
+      <div class="footer-links-group">
+        <h4>Support</h4>
+        <ul>
+          <li><a href="#">Help Center</a></li>
+          <li><a href="#">Contact Us</a></li>
+          <li><a href="#">Terms & Conditions</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2024 AutoBidCRM. Crafted with precision for discerning collectors.</p>
+      <div class="footer-badges">
+        <span><i class="fas fa-shield-alt"></i> Secure Bidding</span>
+        <span><i class="fas fa-check-circle"></i> Verified Vehicles</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Mobile menu toggle
+const mobileBtn = document.getElementById('mobileMenuBtn');
+const navLinks = document.getElementById('navLinks');
+
+if (mobileBtn) {
+  mobileBtn.addEventListener('click', () => {
+    navLinks.classList.toggle('show');
+  });
+}
+
+// Auto-dismiss flash messages after 5 seconds
+document.querySelectorAll('.flash').forEach(flash => {
+  setTimeout(() => {
+    flash.style.opacity = '0';
+    setTimeout(() => flash.remove(), 300);
+  }, 5000);
+});
+
+// Animation on scroll
+const observerOptions = {
+  threshold: 0.1,
+  rootMargin: '0px 0px -50px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, observerOptions);
+
+document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

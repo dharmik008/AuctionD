@@ -1,0 +1,211 @@
+<!-- templates/car_detail.html - Premium Car Detail with Sticky Image -->
+{% extends 'base.html' %}
+{% block title %}{{ car.name }} — AutoBidCRM{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="back-link">
+    <a href="{{ url_for('auction') }}">
+      <i class="fas fa-arrow-left"></i>
+      <span>Back to Auctions</span>
+    </a>
+  </div>
+
+  <div class="car-detail-layout">
+    <!-- LEFT: Sticky Car Image -->
+    <div class="car-detail-gallery">
+      <div class="main-image">
+        <img src="{{ car.image }}" alt="{{ car.name }}"/>
+      </div>
+      <div class="image-badges">
+        <div class="badge premium">Premium Selection</div>
+        {% if car.featured %}
+        <div class="badge featured">Editor's Choice</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- RIGHT: Car Details -->
+    <div class="car-detail-info">
+      <div class="car-meta-large">{{ car.brand }} · {{ car.year }}</div>
+      <h1>{{ car.name }}</h1>
+      
+      <div class="car-price-large">
+        <span class="price-label">Current Highest Bid</span>
+        <span class="price-value">{{ car.current_bid|currency }}</span>
+      </div>
+      
+      <div class="auction-timer-large">
+        <div class="timer-header">
+          <i class="fas fa-hourglass-half"></i>
+          <span>Auction Ends In</span>
+        </div>
+        <div class="timer-display" id="auctionTimer">
+          <div class="timer-unit">
+            <span id="timerDays">--</span>
+            <label>Days</label>
+          </div>
+          <div class="timer-sep">:</div>
+          <div class="timer-unit">
+            <span id="timerHours">--</span>
+            <label>Hours</label>
+          </div>
+          <div class="timer-sep">:</div>
+          <div class="timer-unit">
+            <span id="timerMinutes">--</span>
+            <label>Minutes</label>
+          </div>
+          <div class="timer-sep">:</div>
+          <div class="timer-unit">
+            <span id="timerSeconds">--</span>
+            <label>Seconds</label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="car-description">
+        <h3>Overview</h3>
+        <p>{{ car.description }}</p>
+      </div>
+
+      <div class="specs-grid">
+        <div class="spec-item">
+          <span class="spec-label">Model</span>
+          <span class="spec-val">{{ car.model }}</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-label">Year</span>
+          <span class="spec-val">{{ car.year }}</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-label">Fuel</span>
+          <span class="spec-val">{{ car.fuel }}</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-label">Transmission</span>
+          <span class="spec-val">{{ car.transmission }}</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-label">Kilometers</span>
+          <span class="spec-val">{{ car.km }} km</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-label">Color</span>
+          <span class="spec-val">{{ car.color }}</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-label">Engine</span>
+          <span class="spec-val">{{ car.engine }}</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-label">Power</span>
+          <span class="spec-val">{{ car.power }}</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-label">Torque</span>
+          <span class="spec-val">{{ car.torque }}</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-label">0-100 km/h</span>
+          <span class="spec-val">{{ car.acceleration }}</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-label">Top Speed</span>
+          <span class="spec-val">{{ car.top_speed }}</span>
+        </div>
+      </div>
+
+      <!-- Evaluation Report -->
+      <div class="evaluation-report">
+        <h3><i class="fas fa-clipboard-list"></i> Inspection Report</h3>
+        <div class="evaluation-grid">
+          <div class="eval-item">
+            <span class="eval-label">Condition:</span>
+            <span class="eval-value">{{ evaluation.condition }}</span>
+          </div>
+          <div class="eval-item">
+            <span class="eval-label">Service History:</span>
+            <span class="eval-value">{{ evaluation.service_history }}</span>
+          </div>
+          <div class="eval-item">
+            <span class="eval-label">Accident History:</span>
+            <span class="eval-value">{{ evaluation.accident_history }}</span>
+          </div>
+          <div class="eval-item">
+            <span class="eval-label">Ownership:</span>
+            <span class="eval-value">{{ evaluation.ownership }}</span>
+          </div>
+          <div class="eval-item">
+            <span class="eval-label">Warranty:</span>
+            <span class="eval-value">{{ evaluation.warranty }}</span>
+          </div>
+          <div class="eval-item">
+            <span class="eval-label">Rating:</span>
+            <span class="eval-value">⭐ {{ evaluation.rating }}/5</span>
+          </div>
+          <div class="eval-item">
+            <span class="eval-label">Market Value:</span>
+            <span class="eval-value">{{ evaluation.market_value|currency }}</span>
+          </div>
+          <div class="eval-item">
+            <span class="eval-label">Certified:</span>
+            <span class="eval-value">✓ {{ 'Yes' if evaluation.certified else 'No' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <a href="{{ url_for('bidding', car_id=car.id) }}" class="btn btn-primary btn-large">
+          <i class="fas fa-gavel"></i>
+          <span>Place a Bid</span>
+        </a>
+        <a href="{{ url_for('calculator', car_id=car.id) }}" class="btn btn-outline btn-large">
+          <i class="fas fa-calculator"></i>
+          <span>Calculate EMI</span>
+        </a>
+      </div>
+
+      <div class="auction-info">
+        <p><i class="fas fa-clock"></i> <strong>Auction ends:</strong> {{ car.auction_end[:10] }} at {{ car.auction_end[11:16] }}</p>
+        <p><i class=""></i> <strong></strong> </p>
+        <p><i class="fas fa-shield-alt"></i> <strong>Verified seller:</strong> AutoBidCRM Certified Dealer</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+// Countdown timer
+function updateTimer() {
+  const endTimeStr = "{{ car.auction_end }}";
+  const endTime = new Date(endTimeStr);
+  const now = new Date();
+  const diff = endTime - now;
+  
+  if (diff <= 0) {
+    document.getElementById('timerDays').textContent = '00';
+    document.getElementById('timerHours').textContent = '00';
+    document.getElementById('timerMinutes').textContent = '00';
+    document.getElementById('timerSeconds').textContent = '00';
+    document.querySelector('.action-buttons .btn-primary').disabled = true;
+    return;
+  }
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (86400000)) / (3600000));
+  const minutes = Math.floor((diff % 3600000) / 60000);
+  const seconds = Math.floor((diff % 60000) / 1000);
+  
+  document.getElementById('timerDays').textContent = days.toString().padStart(2, '0');
+  document.getElementById('timerHours').textContent = hours.toString().padStart(2, '0');
+  document.getElementById('timerMinutes').textContent = minutes.toString().padStart(2, '0');
+  document.getElementById('timerSeconds').textContent = seconds.toString().padStart(2, '0');
+}
+
+updateTimer();
+setInterval(updateTimer, 1000);
+</script>
+{% endblock %}
+{% endblock %}

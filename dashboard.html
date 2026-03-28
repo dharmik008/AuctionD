@@ -1,0 +1,135 @@
+<!-- templates/dashboard.html - User Dashboard -->
+{% extends 'base.html' %}
+{% block title %}Dashboard — AutoBidCRM{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="dashboard-header">
+    <div>
+      <h1>Welcome back, {{ dealer.name.split()[0] }} <i class="fas fa-hand-peace"></i></h1>
+      <p>Here's your bidding activity at a glance</p>
+    </div>
+    <div class="dashboard-date">
+      <i class="fas fa-calendar-alt"></i>
+      <span>Member since {{ dealer.joned or '2024' }}</span>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card animate-on-scroll">
+      <div class="stat-icon"><i class="fas fa-gavel"></i></div>
+      <div class="stat-label">Live Auctions</div>
+      <div class="stat-value">{{ stats.total_auctions }}</div>
+    </div>
+    <div class="stat-card animate-on-scroll">
+      <div class="stat-icon"><i class="fas fa-list-ul"></i></div>
+      <div class="stat-label">My Bids</div>
+      <div class="stat-value">{{ stats.my_bids }}</div>
+    </div>
+    <div class="stat-card animate-on-scroll">
+      <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+      <div class="stat-label">Active Bids</div>
+      <div class="stat-value">{{ stats.active_bids }}</div>
+    </div>
+    <div class="stat-card animate-on-scroll">
+      <div class="stat-icon"><i class="fas fa-trophy"></i></div>
+      <div class="stat-label">Won Bids</div>
+      <div class="stat-value">{{ stats.won_bids }}</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <h2>Recommended for You</h2>
+      <a href="{{ url_for('auction') }}" class="view-all-link">
+        <span>View All Auctions</span>
+        <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+    <div class="cars-grid">
+      {% for car in cars %}
+      <div class="car-card-premium animate-on-scroll">
+        <div class="car-card-image">
+          <img src="{{ car.image }}" alt="{{ car.name }}" loading="lazy"/>
+          <div class="car-badge live">
+            <i class="fas fa-circle"></i>
+            <span>Live</span>
+          </div>
+        </div>
+        <div class="car-card-content">
+          <div class="car-meta">
+            <span class="brand">{{ car.brand }}</span>
+            <span class="year">{{ car.year }}</span>
+          </div>
+          <h3 class="car-name">{{ car.name }}</h3>
+          <div class="car-specs">
+            <span><i class="fas fa-tachometer-alt"></i> {{ car.km }} km</span>
+            <span><i class="fas fa-gas-pump"></i> {{ car.fuel|truncate(12) }}</span>
+          </div>
+          <div class="car-price">
+            <div class="current-bid">
+              <span class="label">Current Bid</span>
+              <span class="value">{{ car.current_bid|currency }}</span>
+            </div>
+          </div>
+          <a href="{{ url_for('car_detail', car_id=car.id) }}" class="btn btn-primary btn-block">
+            <span>View Details</span>
+            <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if stats.my_bids > 0 %}
+  <div class="section">
+    <div class="section-header">
+      <h2>Recent Activity</h2>
+      <a href="{{ url_for('bidding_history') }}" class="view-all-link">
+        <span>View Full History</span>
+        <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+    <div class="history-table-container">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Vehicle</th>
+            <th>Bid Amount</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for bid in bids[:5] %}
+          <tr>
+            <td class="car-name-cell">
+              <strong>{{ bid.car_name }}</strong>
+            </td>
+            <td class="bid-amount-cell">
+              <span class="bid-amount">{{ bid.amount|currency }}</span>
+            </td>
+            <td class="date-cell">{{ bid.timestamp[:10] }}</td>
+            <td class="status-cell">
+              {% if bid.status == 'won' %}
+                <span class="status-badge won"><i class="fas fa-trophy"></i> Won</span>
+              {% elif bid.status == 'pending' %}
+                <span class="status-badge pending"><i class="fas fa-clock"></i> Pending</span>
+              {% else %}
+                <span class="status-badge lost"><i class="fas fa-times"></i> Lost</span>
+              {% endif %}
+            </td>
+            <td class="action-cell">
+              <a href="{{ url_for('car_detail', car_id=bid.car_id) }}" class="btn btn-outline btn-sm">View Car</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
